@@ -43,7 +43,8 @@ PROJECT_APPS = [
     'core',
 ]
 THIRDY_APPS = [
-    'rest_framework'
+    'rest_framework',
+    'rest_framework.authtoken'
 ]
 INSTALLED_APPS = DEFAULT_APPS + PROJECT_APPS + THIRDY_APPS
 

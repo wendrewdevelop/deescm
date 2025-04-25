@@ -71,9 +71,22 @@ class RepoModel(models.Model):
         default=uuid.uuid4,
         editable=False
     )
-    repo_name = ...
-    repo_owner = ...
-    repo_description = ...
+    repo_name = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+    )
+    repo_owner = models.ForeignKey(
+        AccountModel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    repo_description = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'repo'

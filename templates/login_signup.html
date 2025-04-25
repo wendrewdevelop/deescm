@@ -37,58 +37,177 @@
       <div class="tab-content" id="authTabContent">
         <!-- Aba Login -->
         <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-          <form>
-            <div class="form-floating mb-3">
-              <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
+          <form method="post" action="{% url 'login' %}" class="row g-2">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="login">
+            <div class="col-12 form-floating mb-3">
+              <input
+                type="email"
+                name="email"
+                class="form-control"
+                id="loginEmail"
+                placeholder="name@example.com"
+                required
+              >
               <label for="loginEmail">E-mail</label>
-              <div class="invalid-feedback">Por favor, insira um e-mail válido.</div>
+              <div class="invalid-feedback">
+                Por favor, insira um e-mail válido.
+              </div>
             </div>
-            <div class="form-floating mb-3">
-              <input type="password" class="form-control" id="loginPassword" placeholder="Senha" required>
+            
+            <div class="col-12 form-floating mb-3">
+              <input
+                type="password"
+                name="password"
+                class="form-control"
+                id="loginPassword"
+                placeholder="Senha"
+                required
+              >
               <label for="loginPassword">Senha</label>
-              <div class="invalid-feedback">A senha é obrigatória.</div>
+              <div class="invalid-feedback">
+                A senha é obrigatória.
+              </div>
             </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="rememberMe">
-              <label class="form-check-label" for="rememberMe">Lembrar-me</label>
+            
+            <div class="col-12 mb-3 form-check">
+              <input
+                type="checkbox"
+                name="remember_me"
+                class="form-check-input"
+                id="rememberMe"
+              >
+              <label class="form-check-label" for="rememberMe">
+                Lembrar-me
+              </label>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Entrar</button>
-            <div class="text-end mt-2">
+            
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary w-100">
+                Entrar
+              </button>
+            </div>
+            
+            <div class="col-12 text-end mt-2">
               <a href="#" class="small">Esqueceu a senha?</a>
             </div>
           </form>
-        </div>
+        </div>        
         <!-- Aba Cadastro -->
         <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-          <form>
-            <div class="form-floating mb-3">
-              <input type="text" class="form-control" id="regName" placeholder="Nome Completo" required>
-              <label for="regName">Nome Completo</label>
-              <div class="invalid-feedback">Por favor, insira seu nome.</div>
+          <form 
+            method="post" 
+            action="{% url 'login' %}" 
+            class="row g-2"
+          >
+            {% csrf_token %}
+        
+            <!-- Nome e Sobrenome -->
+            <div class="col-sm-6">
+              <input
+                type="text"
+                name="first_name"
+                class="form-control"
+                placeholder="Nome"
+                required
+              >
             </div>
-            <div class="form-floating mb-3">
-              <input type="email" class="form-control" id="regEmail" placeholder="name@example.com" required>
-              <label for="regEmail">E-mail</label>
-              <div class="invalid-feedback">Por favor, insira um e-mail válido.</div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                name="last_name"
+                class="form-control"
+                placeholder="Sobrenome"
+                required
+              >
             </div>
-            <div class="form-floating mb-3">
-              <input type="password" class="form-control" id="regPassword" placeholder="Senha" required>
-              <label for="regPassword">Senha</label>
-              <div class="invalid-feedback">A senha deve ter ao menos 6 caracteres.</div>
+        
+            <!-- E-mail e Telefone -->
+            <div class="col-sm-6">
+              <input
+                type="email"
+                name="email"
+                class="form-control"
+                placeholder="E-mail"
+                required
+              >
             </div>
-            <div class="form-floating mb-3">
-              <input type="password" class="form-control" id="regConfirm" placeholder="Confirme a Senha" required>
-              <label for="regConfirm">Confirme a Senha</label>
-              <div class="invalid-feedback">As senhas não coincidem.</div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                name="phone"
+                class="form-control"
+                placeholder="(00) 00000-0000"
+                required
+              >
             </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="termsCheck" required>
-              <label class="form-check-label" for="termsCheck">Aceito os termos de uso</label>
-              <div class="invalid-feedback">É necessário aceitar os termos.</div>
+        
+            <!-- Senha e Confirmação -->
+            <div class="col-sm-6">
+              <input
+                type="password"
+                name="password"
+                class="form-control"
+                placeholder="Senha"
+                required
+                minlength="6"
+              >
             </div>
-            <button type="submit" class="btn btn-success w-100">Cadastrar</button>
+            <div class="col-sm-6">
+              <input
+                type="password"
+                name="confirm_password"
+                class="form-control"
+                placeholder="Confirme a Senha"
+                required
+              >
+            </div>
+        
+            <!-- Data de Nascimento e Apelido -->
+            <div class="col-sm-6">
+              <input
+                type="text"
+                name="birthday"
+                class="form-control"
+                placeholder="DD/MM/AAAA"
+                required
+                pattern="\d{2}/\d{2}/\d{4}"
+              >
+            </div>
+            <div class="col-sm-6">
+              <input
+                type="text"
+                name="nickname"
+                class="form-control"
+                placeholder="Apelido"
+              >
+            </div>
+        
+            <!-- Termos de uso -->
+            <div class="col-12">
+              <div class="form-check">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  id="termsCheck"
+                  required
+                >
+                <label class="form-check-label" for="termsCheck">
+                  Aceito os termos de uso
+                </label>
+              </div>
+            </div>
+        
+            <!-- Botão de Envio -->
+            <div class="col-12">
+              <button type="submit" class="btn btn-success w-100">
+                Cadastrar
+              </button>
+            </div>
           </form>
         </div>
+        
+              
       </div>
     </div>
   </div>
