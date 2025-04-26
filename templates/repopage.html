@@ -23,7 +23,7 @@
           
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-person-circle"></i> Usuário
+              <i class="bi bi-person-circle"></i> {{user_name}}
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
               <li><a class="dropdown-item" href="{% url 'myrepos' user_id=repo.repo_owner.pk %}">Meus Repos</a></li>

@@ -26,6 +26,10 @@ class HomePageView(View):
         context = {
             "title": "Página inicial"
         }
+        user = AccountModel.objects.filter(
+            id=request.user.id
+        ).first()
+        context["user_name"] = f'{user.first_name} {user.last_name}'
         return render(request, self.template_name, context)
 
 
@@ -40,6 +44,7 @@ class MyReposView(View):
             repo_owner=user_id
         )
         context["repos"] = repos
+        context["user_name"] = f'{repos.first().repo_owner.first_name} {repos.first().repo_owner.last_name}'
         return render(request, self.template_name, context)
 
     def post(self, request, user_id, *args, **kwargs):
@@ -86,6 +91,8 @@ class RepoPageView(View):
             repo_id=repo_id
         ).first()
         context["repo"] = repo
+        context["title"] = f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} - {repo.repo_name}'
+        context["user_name"] = f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}'
         return render(request, self.template_name, context)
 
 
@@ -103,6 +110,7 @@ class ProfileView(View):
         context["first_name"] = user_data.first_name
         context["last_name"] = user_data.last_name
         context["email"] = user_data.email
+        context["user_name"] = f'{user_data.first_name} {user_data.last_name}'
         return render(request, self.template_name, context)
     
 
