@@ -13,22 +13,23 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
-      <a class="navbar-brand" href="dashboard.html">RepoHub</a>
+      <a class="navbar-brand" href="{% url 'home' %}">Dee</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="dashboard.html">Início</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Meus Repositórios</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Início</a></li>
+          
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-person-circle"></i> Usuário
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-              <li><a class="dropdown-item" href="#">Perfil</a></li>
+              <li><a class="dropdown-item" href="{% url 'myrepos' user_id=repo.repo_owner.pk %}">Meus Repos</a></li>
+              <li><a class="dropdown-item" href="{% url 'profile' user_id=repo.repo_owner.pk %}">Perfil</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#">Sair</a></li>
+              <li><a class="dropdown-item" href="{% url 'logout' %}">Sair</a></li>
             </ul>
           </li>
         </ul>
@@ -42,7 +43,7 @@
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="dashboard.html">Início</a></li>
         <li class="breadcrumb-item"><a href="dashboard.html#meus-repositorios">Meus Repositórios</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Projeto Exemplo</li>
+        <li class="breadcrumb-item active" aria-current="page">{{repo.repo_name}}</li>
       </ol>
     </div>
   </nav>
@@ -52,8 +53,11 @@
     <div class="row">
       <!-- Seção Principal -->
       <div class="col-lg-8">
-        <h2>Projeto Exemplo</h2>
-        <p class="text-muted">Uma breve descrição sobre a finalidade deste projeto de código aberto.</p>
+        <h2>{{repo.repo_name}}</h2>
+        <p class="text-muted">
+          {{repo.repo_description}}
+        </p>
+        {% if repo.repo_object_link %}
         <!-- Tabs de Navegação -->
         <ul class="nav nav-tabs" id="repoTab" role="tablist">
           <li class="nav-item" role="presentation">
@@ -100,6 +104,18 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
             <p>Não há pull requests.</p>
           </div>
         </div>
+        {% else %}
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+          <h5>Faça upload dos seus arquivos</h5>
+          <pre class="bg-light p-3" style="white-space: pre-wrap;">
+dee init .
+dee add .
+dee commit "mensagem..."
+dee push
+          </pre>
+          <button class="btn btn-sm btn-outline-info float-end">Upload</button>
+        </div>
+        {% endif %}
       </div>
 
       <!-- Sidebar -->

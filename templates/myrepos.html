@@ -71,11 +71,69 @@
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
           <h1 class="h2">Meus Repositórios</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
-            <button type="button" class="btn btn-sm btn-primary">
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newrepo">
               <i class="bi bi-plus-lg"></i> Novo Repositório
             </button>
           </div>
         </div>
+        <div class="modal fade" id="newrepo" tabindex="-1" aria-labelledby="newrepoLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form id="newrepoForm"
+                    method="post"
+                    action="{% url 'myrepos' user_id=request.user.pk %}"
+                    enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                  <h5 class="modal-title" id="newrepoLabel">Criar novo repositório</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                  <!-- Nome do repositório -->
+                  <div class="form-floating mb-3">
+                    <input type="text"
+                           class="form-control"
+                           id="repoName"
+                           name="repo_name"
+                           placeholder="Nome do repositório"
+                           required>
+                    <label for="repoName">Nome do repositório</label>
+                  </div>
+        
+                  <!-- Descrição do repositório -->
+                  <div class="form-floating mb-3">
+                    <textarea class="form-control"
+                              id="repoDescription"
+                              name="repo_description"
+                              placeholder="Uma breve descrição"
+                              style="height: 100px"
+                              required></textarea>
+                    <label for="repoDescription">Descrição</label>
+                  </div>
+        
+                  <!-- (Opcional) Upload do ZIP -->
+                  <!--
+                  <div class="mb-3">
+                    <label for="repoZip" class="form-label">Arquivo ZIP</label>
+                    <input class="form-control"
+                           type="file"
+                           id="repoZip"
+                           name="zip_file"
+                           accept=".zip">
+                  </div>
+                  -->
+                </div>
+                <div class="modal-footer">
+                  <button type="button"
+                          class="btn btn-secondary"
+                          data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit"
+                          class="btn btn-primary">Salvar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>        
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           {% for repo in repos %}
           <div class="col">
@@ -86,7 +144,7 @@
               </div>
               <div class="card-footer d-flex justify-content-between align-items-center">
                 <small class="text-muted">★ 123</small>
-                <a href="{% url 'repo' repo_id=repo_id %}" class="btn btn-sm btn-outline-primary">Ver Detalhes</a>
+                <a href="{% url 'repo' repo_id=repo.pk %}" class="btn btn-sm btn-outline-primary">Ver Detalhes</a>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.urls import reverse
 from django.views import View
@@ -42,6 +42,38 @@ class MyReposView(View):
         context["repos"] = repos
         return render(request, self.template_name, context)
 
+    def post(self, request, user_id, *args, **kwargs):
+        owner = get_object_or_404(AccountModel, pk=user_id)
+
+        # Captura campos do formulário
+        name = request.POST.get('repo_name', '').strip()
+        description = request.POST.get('repo_description', '').strip()
+
+        # (Opcional) se você adicionou zip_file no modelo:
+        # zip_file = request.FILES.get('zip_file')
+
+        # Validações básicas
+        if not name:
+            messages.error(request, "O nome do repositório não pode ficar vazio.")
+            return redirect('myrepos', user_id=user_id)
+
+        try:
+            # Cria o repositório
+            repo = RepoModel.objects.create(
+                repo_name=name,
+                repo_description=description,
+                repo_owner=owner,
+                # zip_file=zip_file,  # se existir
+            )
+
+            messages.success(
+                request, 
+                f"Repositório “{repo.repo_name}” criado com sucesso!"
+            )
+            return redirect('repo', repo_id=repo.id)
+        except Exception as error:
+            print(f"Erro::: {error}")
+            return redirect('myrepos', user_id=user_id)
 
 class RepoPageView(View):
     template_name = 'repopage.html'
@@ -50,6 +82,10 @@ class RepoPageView(View):
         context = {
             "title": "<repo_name:str>"
         }
+        repo = RepoModel.objects.filter(
+            repo_id=repo_id
+        ).first()
+        context["repo"] = repo
         return render(request, self.template_name, context)
 
 
