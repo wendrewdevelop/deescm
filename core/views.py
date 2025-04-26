@@ -1,5 +1,8 @@
 import re
+import os
+import tarfile
 from datetime import datetime
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.urls import reverse
@@ -84,15 +87,25 @@ class RepoPageView(View):
     template_name = 'repopage.html'
 
     def get(self, request, repo_id, *args, **kwargs):
-        context = {
-            "title": "<repo_name:str>"
-        }
         repo = RepoModel.objects.filter(
             repo_id=repo_id
         ).first()
-        context["repo"] = repo
-        context["title"] = f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} - {repo.repo_name}'
-        context["user_name"] = f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}'
+        archive_path = os.path.join(settings.BASE_DIR, 'test_repos', 'dee-0.1.0.tar.gz')
+        with tarfile.open(archive_path, 'r:gz') as tar:
+            members = [m for m in tar.getmembers() if m.isreg()]
+            files = []
+            for m in members:
+                files.append({
+                    'name': m.name,
+                    'size': m.size,
+                    'modified': datetime.fromtimestamp(m.mtime).strftime('%Y-%m-%d %H:%M:%S')
+                })
+        context = {
+            "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
+            "repo": repo,
+            "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
+            "files": files,
+        }
         return render(request, self.template_name, context)
 
 

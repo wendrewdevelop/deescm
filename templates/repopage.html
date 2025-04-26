@@ -57,8 +57,6 @@
         <p class="text-muted">
           {{repo.repo_description}}
         </p>
-        {% if repo.repo_object_link %}
-        <!-- Tabs de Navegação -->
         <ul class="nav nav-tabs" id="repoTab" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Visão Geral</button>
@@ -88,13 +86,30 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
           </div>
           <!-- Code -->
           <div class="tab-pane fade" id="code" role="tabpanel" aria-labelledby="code-tab">
-            <p>Código-fonte listado aqui.</p>
-            <div class="list-group">
-              <a href="#" class="list-group-item list-group-item-action">index.html</a>
-              <a href="#" class="list-group-item list-group-item-action">style.css</a>
-              <a href="#" class="list-group-item list-group-item-action">app.js</a>
-            </div>
-          </div>
+            <h5>{{repo.repo_name}}</h5>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Arquivo</th>
+                  <th>Tamanho (bytes)</th>
+                  <th>Modificado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for file in files %}
+                <tr>
+                  <td>{{ file.name }}</td>
+                  <td>{{ file.size }}</td>
+                  <td>{{ file.modified }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center">Nenhum arquivo encontrado.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>          
           <!-- Issues -->
           <div class="tab-pane fade" id="issues" role="tabpanel" aria-labelledby="issues-tab">
             <p>Não há issues abertas.</p>
@@ -104,18 +119,6 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
             <p>Não há pull requests.</p>
           </div>
         </div>
-        {% else %}
-        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-          <h5>Faça upload dos seus arquivos</h5>
-          <pre class="bg-light p-3" style="white-space: pre-wrap;">
-dee init .
-dee add .
-dee commit "mensagem..."
-dee push
-          </pre>
-          <button class="btn btn-sm btn-outline-info float-end">Upload</button>
-        </div>
-        {% endif %}
       </div>
 
       <!-- Sidebar -->
