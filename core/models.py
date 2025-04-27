@@ -65,27 +65,6 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
         Token.objects.create(user=instance)
 
 
-def user_directory_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
-    return "user_{0}/{1}".format(instance.user.id, filename)
-
-
-class RepoObjectModel(models.Model):
-    repo_id = models.UUIDField(
-        primary_key=True, 
-        default=uuid.uuid4,
-        editable=False
-    )
-    upload = models.FileField(
-        upload_to=user_directory_path
-    )
-    
-    class Meta:
-        verbose_name = 'repo_object'
-        verbose_name_plural = 'repo_objects'
-        db_table = 'tb_repo_object'
-
-
 class RepoModel(models.Model):
     repo_id = models.UUIDField(
         primary_key=True, 
@@ -108,14 +87,36 @@ class RepoModel(models.Model):
         null=True,
         blank=True
     )
-    repo_object_link = models.ForeignKey(
-        RepoObjectModel,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True
-    )
 
     class Meta:
         verbose_name = 'repo'
         verbose_name_plural = 'repos'
         db_table = 'tb_repo'
+
+
+def user_directory_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+    return "user_{0}/{1}".format(instance.user.id, filename)
+
+
+class RepoObjectModel(models.Model):
+    repo_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4,
+        editable=False
+    )
+    upload = models.FileField(
+        upload_to=user_directory_path
+    )
+    repo_link = models.ForeignKey(
+        RepoModel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    
+    class Meta:
+        verbose_name = 'repo_object'
+        verbose_name_plural = 'repo_objects'
+        db_table = 'tb_repo_object'
+

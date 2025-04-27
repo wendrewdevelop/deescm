@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
-from .models import AccountModel, RepoModel
+from .models import AccountModel, RepoModel, RepoObjectModel
 
 
 class IndexView(View):
@@ -88,9 +88,13 @@ class RepoPageView(View):
 
     def get(self, request, repo_id, *args, **kwargs):
         repo = RepoModel.objects.filter(
-            repo_id=repo_id
+            repo_id=repo_id,
         ).first()
-        archive_path = os.path.join(settings.BASE_DIR, 'test_repos', 'dee-0.1.0.tar.gz')
+        repo_object = RepoObjectModel.objects.filter(
+            repo_link=repo.repo_id,
+        ).first()
+        print(repo_object)
+        archive_path = os.path.join(settings.BASE_DIR, 'test_repos', f'{repo_object.upload}')
         with tarfile.open(archive_path, 'r:gz') as tar:
             members = [m for m in tar.getmembers() if m.isreg()]
             files = []
