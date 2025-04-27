@@ -9,6 +9,10 @@ from django.urls import reverse
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
+from django.utils.html import mark_safe
+from pygments import highlight
+from pygments.lexers import get_lexer_for_filename, guess_lexer
+from pygments.formatters import HtmlFormatter
 from .models import AccountModel, RepoModel, RepoObjectModel
 
 
@@ -109,6 +113,54 @@ class RepoPageView(View):
             "repo": repo,
             "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
             "files": files,
+        }
+        return render(request, self.template_name, context)
+
+
+class FileDetailView(View):
+    template_name = 'file_detail.html'
+
+    def get(self, request, repo_id, *args, **kwargs):
+        # 1) Busca repositório e objeto ZIP
+        repo_obj = RepoObjectModel.objects.filter(
+            repo_link=repo_id
+        ).first()
+        # repo = RepoModel.objects.filter(
+        #     repo_id=repo_obj.repo_link
+        # ).first()
+
+        # 2) Lê o parâmetro 'path' da URL
+        file_path = request.GET.get('path')
+        if not file_path:
+            return render(request, self.template_name, {'error': 'Caminho do arquivo não informado.'})
+
+        # 3) Abre o tar.gz sem extrair no disco :contentReference[oaicite:9]{index=9}
+        archive_path = os.path.join(settings.BASE_DIR, 'test_repos', f'{repo_obj.upload}')
+        with tarfile.open(archive_path, 'r:gz') as tar:
+            try:
+                member = tar.getmember(file_path)
+            except KeyError:
+                return render(request, self.template_name, {'error': 'Arquivo não encontrado no repositório.'})
+            f = tar.extractfile(member)  # :contentReference[oaicite:10]{index=10}
+            raw = f.read().decode('utf-8', errors='replace')
+            f.close()
+
+        # 4) Detecta linguagem e destaca com Pygments :contentReference[oaicite:11]{index=11}
+        try:
+            lexer = get_lexer_for_filename(file_path, stripall=True)
+        except Exception:
+            lexer = guess_lexer(raw)
+        formatter = HtmlFormatter(linenos=True, cssclass="highlight")
+        highlighted = highlight(raw, lexer, formatter)
+        css_style = formatter.get_style_defs('.highlight')
+
+        context = {
+            'repo_owner': repo_obj.repo_link.repo_owner,
+            'repo_id': repo_obj.repo_link.repo_id,
+            'repo_name': repo_obj.repo_link.repo_name,
+            'file_name': file_path,
+            'highlighted_code': mark_safe(highlighted),
+            'css_style': css_style,
         }
         return render(request, self.template_name, context)
 

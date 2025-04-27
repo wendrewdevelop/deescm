@@ -98,7 +98,11 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
               <tbody>
                 {% for file in files %}
                 <tr>
-                  <td>{{ file.name }}</td>
+                  <td>
+                    <a href="{% url 'repo_file_detail' repo.repo_id %}?path={{ file.name|urlencode }}">
+                      {{ file.name }}
+                    </a>
+                  </td>
                   <td>{{ file.size }}</td>
                   <td>{{ file.modified }}</td>
                 </tr>

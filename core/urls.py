@@ -7,6 +7,7 @@ from .views import (
     MyReposView,
     RepoPageView,
     ProfileView,
+    FileDetailView,
 )
 
 
@@ -18,4 +19,9 @@ urlpatterns = [
     path('myrepos/<str:user_id>/', MyReposView.as_view(), name='myrepos'),
     path('repo/<str:repo_id>/', RepoPageView.as_view(), name='repo'),
     path('profile/<str:user_id>/', ProfileView.as_view(), name='profile'),
+    path(
+        'repo/<uuid:repo_id>/file/',
+        FileDetailView.as_view(),
+        name='repo_file_detail'
+    ), 
 ]
