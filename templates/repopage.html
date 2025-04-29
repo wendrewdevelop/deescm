@@ -8,6 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body class="d-flex flex-column min-vh-100">
   <!-- Navbar -->
@@ -116,7 +118,111 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
           </div>          
           <!-- Issues -->
           <div class="tab-pane fade" id="issues" role="tabpanel" aria-labelledby="issues-tab">
-            <p>Não há issues abertas.</p>
+            <div class="row">
+              {% if not issues %}
+              <div class="col">
+                <p>Não há issues abertas.</p>
+              </div>
+              <div class="col">
+                <button type="button" class="btn btn-sm btn-primary float-end" data-bs-toggle="modal" data-bs-target="#addIssueModal">+ Criar issue</button>
+                <div class="modal fade" id="addIssueModal" tabindex="-1" aria-labelledby="editBasicInfoLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <form action="{% url 'repo' repo_id=repo.repo_id %}" method="post">
+                      {% csrf_token %}
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="editBasicInfoLabel">Criar issue</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="editUserName" name="issue_title" placeholder="Titulo" required>
+                            <label for="editUserName">Titulo para a issue</label>
+                          </div>
+                          <div class="form-floating mb-3">
+                            <div class="form-floating mb-3">
+                              <!-- Editor container replaces textarea -->
+                              <div id="richEditor" class="form-control" style="height: 200px;"></div>
+                              <label for="richEditor">Descrição</label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                          <input type="hidden" name="issue_description" id="hiddenContent">
+                          <input type="hidden" name="issue_status" value="open">
+                          <input type="hidden" name="issue_repo_link" value="{{repo.repo_id}}">
+                          <input type="hidden" name="issue_created_by" value="{{request.user.pk}}">
+                          <input type="hidden" name="form_type" value="issue">
+                          <button type="submit" onclick="document.getElementById('hiddenContent').value = quill.root.innerHTML;">
+                            Enviar
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              {% for issue in issues %}
+              <div class="col">
+                <div class="card shadow-sm border-start border-4 border-primary">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h5 class="card-title mb-1">{{ issue.issue_title }}</h5>
+                        <small class="text-muted">Criada por {{ issue.issue_created_by.nickname }}</small>
+                      </div>
+                      <span class="badge bg-{{ issue.issue_status|yesno:'success,danger,secondary' }}">{{ issue.issue_status }}</span>
+                    </div>
+                    <hr>
+                    <div class="card-text">{{ issue.issue_description|safe }}</div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              <div class="col">
+                <button type="button" class="btn btn-sm btn-primary float-end" data-bs-toggle="modal" data-bs-target="#addIssueModal">+ Criar issue</button>
+                <div class="modal fade" id="addIssueModal" tabindex="-1" aria-labelledby="editBasicInfoLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <form action="{% url 'repo' repo_id=repo.repo_id %}" method="post">
+                      {% csrf_token %}
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="editBasicInfoLabel">Criar issue</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="editUserName" name="issue_title" placeholder="Titulo" required>
+                            <label for="editUserName">Titulo para a issue</label>
+                          </div>
+                          <div class="form-floating mb-3">
+                            <div class="form-floating mb-3">
+                              <!-- Editor container replaces textarea -->
+                              <div id="richEditor" class="form-control" style="height: 200px;"></div>
+                              <label for="richEditor">Descrição</label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                          <input type="hidden" name="issue_description" id="hiddenContent">
+                          <input type="hidden" name="issue_status" value="open">
+                          <input type="hidden" name="issue_repo_link" value="{{repo.repo_id}}">
+                          <input type="hidden" name="issue_created_by" value="{{request.user.pk}}">
+                          <input type="hidden" name="form_type" value="issue">
+                          <button type="submit" onclick="document.getElementById('hiddenContent').value = quill.root.innerHTML;">
+                            Enviar
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
           </div>
           <!-- Pull Requests -->
           <div class="tab-pane fade" id="pulls" role="tabpanel" aria-labelledby="pulls-tab">
@@ -147,7 +253,7 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
           <div class="card-body">
             <h5 class="card-title">Clonar</h5>
             <div class="input-group">
-              <input type="text" class="form-control" value="git clone https://repo.example.com/projeto.git" readonly>
+              <input type="text" class="form-control" value="dee clone http://127.0.0.1:8000/repo/edafc182-efad-4dc5-9363-890be3cea63c/" readonly>
               <button class="btn btn-outline-secondary" type="button">Copiar</button>
             </div>
           </div>
@@ -165,5 +271,31 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
 
   <!-- Bootstrap 5.3 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"></script>
+  <script>
+    // Initialize Quill on the container
+    const quill = new Quill('#richEditor', {
+      theme: 'snow',                   // Snow gives a clean toolbar
+      modules: {
+        toolbar: [                    // Customize toolbar options
+          ['bold', 'italic', 'underline', 'strike'],        
+          ['blockquote', 'code-block'],                    
+          [{ 'header': 1 }, { 'header': 2 }],               
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],     
+          [{ 'script': 'sub'}, { 'script': 'super' }],      
+          [{ 'indent': '-1'}, { 'indent': '+1' }],          
+          [{ 'direction': 'rtl' }],                         
+          [{ 'size': ['small', false, 'large', 'huge'] }],  
+          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],        
+          [{ 'color': [] }, { 'background': [] }],          
+          [{ 'font': [] }],                                 
+          [{ 'align': [] }],                                
+          ['clean'],                                        
+          ['link', 'image', 'video']                        
+        ]
+      }
+    });
+  </script>
+
 </body>
 </html>

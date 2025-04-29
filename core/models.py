@@ -120,3 +120,81 @@ class RepoObjectModel(models.Model):
         verbose_name_plural = 'repo_objects'
         db_table = 'tb_repo_object'
 
+
+class RepoStarsModel(models.Model):
+    repo_stars_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4,
+        editable=False
+    )
+    repo_link = models.ForeignKey(
+        RepoModel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = 'repo_star'
+        verbose_name_plural = 'repo_stars'
+        db_table = 'tb_repo_star'
+
+
+class RepoForksModel(models.Model):
+    repo_fork_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4,
+        editable=False
+    )
+    repo_link = models.ForeignKey(
+        RepoModel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = 'repo_fork'
+        verbose_name_plural = 'repo_forks'
+        db_table = 'tb_repo_fork'
+
+
+class RepoIssueModel(models.Model):
+    repo_issue_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4,
+        editable=False
+    )
+    repo_link = models.ForeignKey(
+        RepoModel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    issue_title = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+    )
+    issue_description = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+    )
+    issue_status = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
+    )
+    created_by = models.ForeignKey(
+        AccountModel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = 'repo_issue'
+        verbose_name_plural = 'repo_issues'
+        db_table = 'tb_repo_issue'
+

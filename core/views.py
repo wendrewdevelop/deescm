@@ -13,7 +13,14 @@ from django.utils.html import mark_safe
 from pygments import highlight
 from pygments.lexers import get_lexer_for_filename, guess_lexer
 from pygments.formatters import HtmlFormatter
-from .models import AccountModel, RepoModel, RepoObjectModel
+from .models import (
+    AccountModel, 
+    RepoModel, 
+    RepoObjectModel,
+    RepoIssueModel,
+    RepoStarsModel,
+    RepoForksModel
+)
 
 
 class IndexView(View):
@@ -51,7 +58,7 @@ class MyReposView(View):
             repo_owner=user_id
         )
         context["repos"] = repos
-        context["user_name"] = f'{repos.first().repo_owner.first_name} {repos.first().repo_owner.last_name}'
+        context["user_name"] = f'{request.user.first_name} {request.user.last_name}'
         return render(request, self.template_name, context)
 
     def post(self, request, user_id, *args, **kwargs):
@@ -60,9 +67,6 @@ class MyReposView(View):
         # Captura campos do formulário
         name = request.POST.get('repo_name', '').strip()
         description = request.POST.get('repo_description', '').strip()
-
-        # (Opcional) se você adicionou zip_file no modelo:
-        # zip_file = request.FILES.get('zip_file')
 
         # Validações básicas
         if not name:
@@ -87,6 +91,7 @@ class MyReposView(View):
             print(f"Erro::: {error}")
             return redirect('myrepos', user_id=user_id)
 
+
 class RepoPageView(View):
     template_name = 'repopage.html'
 
@@ -94,47 +99,93 @@ class RepoPageView(View):
         repo = RepoModel.objects.filter(
             repo_id=repo_id,
         ).first()
+        print(repo.repo_id)
         repo_object = RepoObjectModel.objects.filter(
             repo_link=repo.repo_id,
         ).first()
         print(repo_object)
-        archive_path = os.path.join(settings.BASE_DIR, 'test_repos', f'{repo_object.upload}')
-        with tarfile.open(archive_path, 'r:gz') as tar:
-            members = [m for m in tar.getmembers() if m.isreg()]
-            files = []
-            for m in members:
-                files.append({
-                    'name': m.name,
-                    'size': m.size,
-                    'modified': datetime.fromtimestamp(m.mtime).strftime('%Y-%m-%d %H:%M:%S')
-                })
+        issues = ...
         context = {
             "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
             "repo": repo,
             "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
-            "files": files,
         }
+        if repo_object:
+            archive_path = os.path.join(
+                settings.BASE_DIR, 
+                'test_repos', 
+                
+                f'{repo_object.upload}'
+            )
+            with tarfile.open(archive_path, 'r:gz') as tar:
+                members = [m for m in tar.getmembers() if m.isreg()]
+                files = []
+                for m in members:
+                    files.append({
+                        'name': m.name,
+                        'size': m.size,
+                        'modified': datetime.fromtimestamp(m.mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+            context = {
+                "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
+                "repo": repo,
+                "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
+                "files": files,
+            }
         return render(request, self.template_name, context)
+    
+    def post(self, request, repo_id, *args, **kwargs):
+        repo = RepoModel.objects.filter(
+            repo_id=repo_id,
+        ).first()
+
+        if request.method == "POST":
+            form_type = request.POST.get('form_type')
+            print(form_type)
+            if form_type == "issue":
+                issue_title = request.POST.get('issue_title')
+                print(issue_title)
+                issue_description = request.POST.get('issue_description')
+                print(issue_description)
+                issue_status = request.POST.get('issue_status')
+                print(issue_status)
+                issue_repo_link = request.POST.get('issue_repo_link')
+                print(issue_repo_link)
+                issue_created_by = request.POST.get('issue_created_by')
+                print(issue_created_by)
+                try:
+                    issue = RepoIssueModel.objects.create(
+                        request, 
+                        issue_title=issue_title, 
+                        issue_description=issue_description,
+                        issue_status=issue_status,
+                        repo_link=issue_repo_link,
+                        created_by=issue_created_by
+                    )
+                    print(issue)
+                    return redirect('repo', repo_id=issue_repo_link)
+                except Exception as error:
+                    print(f'ERROR REGISTER USER::: {error}')
+                    messages.error(
+                        request, 
+                        'Erro ao criar sua conta, tente novamente ou contate o suporte!', 
+                        extra_tags='error'
+                    )
+                    return redirect('repo', repo_id=repo.repo_id)
 
 
 class FileDetailView(View):
     template_name = 'file_detail.html'
 
     def get(self, request, repo_id, *args, **kwargs):
-        # 1) Busca repositório e objeto ZIP
         repo_obj = RepoObjectModel.objects.filter(
             repo_link=repo_id
         ).first()
-        # repo = RepoModel.objects.filter(
-        #     repo_id=repo_obj.repo_link
-        # ).first()
 
-        # 2) Lê o parâmetro 'path' da URL
         file_path = request.GET.get('path')
         if not file_path:
             return render(request, self.template_name, {'error': 'Caminho do arquivo não informado.'})
 
-        # 3) Abre o tar.gz sem extrair no disco :contentReference[oaicite:9]{index=9}
         archive_path = os.path.join(settings.BASE_DIR, 'test_repos', f'{repo_obj.upload}')
         with tarfile.open(archive_path, 'r:gz') as tar:
             try:
@@ -145,7 +196,6 @@ class FileDetailView(View):
             raw = f.read().decode('utf-8', errors='replace')
             f.close()
 
-        # 4) Detecta linguagem e destaca com Pygments :contentReference[oaicite:11]{index=11}
         try:
             lexer = get_lexer_for_filename(file_path, stripall=True)
         except Exception:
@@ -248,6 +298,16 @@ class LoginView(View):
                     extra_tags='error'
                 )
                 return redirect('login')
+    
+        return render(request, self.template_name, context)
+    
+
+class IssueView(View):
+    template_name = 'repopage.html'
+
+    def post(self, request):
+        context = {}
+        
     
         return render(request, self.template_name, context)
            
