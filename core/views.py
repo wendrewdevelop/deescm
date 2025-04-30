@@ -111,7 +111,8 @@ class RepoPageView(View):
             "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
             "repo": repo,
             "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
-            "issues": issues
+            "issues": issues,
+            "issues_count": issues.count()
         }
         if repo_object:
             archive_path = os.path.join(
@@ -134,6 +135,8 @@ class RepoPageView(View):
                 "repo": repo,
                 "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
                 "files": files,
+                "issues": issues,
+                "issues_count": issues.count()
             }
         return render(request, self.template_name, context)
     
