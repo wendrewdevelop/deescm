@@ -104,11 +104,14 @@ class RepoPageView(View):
             repo_link=repo.repo_id,
         ).first()
         print(repo_object)
-        issues = ...
+        issues = RepoIssueModel.objects.filter(
+            repo_link=repo.repo_id
+        )
         context = {
             "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
             "repo": repo,
             "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
+            "issues": issues
         }
         if repo_object:
             archive_path = os.path.join(
@@ -154,14 +157,20 @@ class RepoPageView(View):
                 issue_created_by = request.POST.get('issue_created_by')
                 print(issue_created_by)
                 try:
-                    issue = RepoIssueModel.objects.create(
-                        request, 
+                    repo_instance = RepoModel.objects.get(
+                        repo_id=issue_repo_link
+                    )
+                    account_instance = AccountModel.objects.get(
+                        id=issue_created_by
+                    )
+                    issue = RepoIssueModel(
                         issue_title=issue_title, 
                         issue_description=issue_description,
                         issue_status=issue_status,
-                        repo_link=issue_repo_link,
-                        created_by=issue_created_by
+                        repo_link=repo_instance,
+                        created_by=account_instance
                     )
+                    issue.save()
                     print(issue)
                     return redirect('repo', repo_id=issue_repo_link)
                 except Exception as error:

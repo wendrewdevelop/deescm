@@ -164,23 +164,28 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
                 </div>
               </div>
               {% else %}
-              {% for issue in issues %}
+              
               <div class="col">
-                <div class="card shadow-sm border-start border-4 border-primary">
+                {% for issue in issues %}
+                <div class="card mt-1 shadow-sm border-{% if issue.issue_status == 'open' %}success{% else %}danger{% endif %}
+                  border-4 border-primary">
                   <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
                         <h5 class="card-title mb-1">{{ issue.issue_title }}</h5>
-                        <small class="text-muted">Criada por {{ issue.issue_created_by.nickname }}</small>
+                        <small class="text-muted">Criada por <i><u>{{ issue.created_by.nickname }}</u></i></small>
                       </div>
                       <span class="badge bg-{{ issue.issue_status|yesno:'success,danger,secondary' }}">{{ issue.issue_status }}</span>
                     </div>
                     <hr>
-                    <div class="card-text">{{ issue.issue_description|safe }}</div>
+                    <div class="card-text">
+                      <a href="#" class="btn btn-sm btn-outline-secondary float-end">Detalhes</a>
+                    </div>
                   </div>
                 </div>
+                {% endfor %}
               </div>
-              {% endfor %}
+              
               <div class="col">
                 <button type="button" class="btn btn-sm btn-primary float-end" data-bs-toggle="modal" data-bs-target="#addIssueModal">+ Criar issue</button>
                 <div class="modal fade" id="addIssueModal" tabindex="-1" aria-labelledby="editBasicInfoLabel" aria-hidden="true">
