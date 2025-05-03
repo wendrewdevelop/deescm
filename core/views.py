@@ -1,5 +1,8 @@
 import re
 import os
+import paramiko
+import io
+import zipfile
 import tarfile
 from datetime import datetime
 from django.conf import settings
@@ -95,18 +98,47 @@ class MyReposView(View):
 class RepoPageView(View):
     template_name = 'repopage.html'
 
+    def get_remote_zip(self, hash_name):
+        """Busca o arquivo ZIP no servidor remoto via SFTP"""
+        try:
+            # Configurar conexão SSH/SFTP
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(
+                hostname='192.168.3.59',
+                username='servidor',
+                password='0110'
+            )
+            
+            sftp = ssh.open_sftp()
+            
+            # Caminho remoto completo com .zip
+            remote_path = f'/home/servidor/repos/{hash_name}.zip'
+            
+            # Cria um arquivo temporário em memória
+            zip_buffer = io.BytesIO()
+            
+            # Baixa o arquivo do servidor para a memória
+            sftp.getfo(remote_path, zip_buffer)
+            
+            zip_buffer.seek(0)  # Rebobina o buffer para leitura
+            return zip_buffer
+            
+        except Exception as e:
+            print(f"Erro ao buscar arquivo remoto: {e}")
+            return None
+        finally:
+            sftp.close() if 'sftp' in locals() else None
+            ssh.close() if 'ssh' in locals() else None
+
     def get(self, request, repo_id, *args, **kwargs):
-        repo = RepoModel.objects.filter(
-            repo_id=repo_id,
-        ).first()
-        print(repo.repo_id)
-        repo_object = RepoObjectModel.objects.filter(
-            repo_link=repo.repo_id,
-        ).first()
-        print(repo_object)
-        issues = RepoIssueModel.objects.filter(
-            repo_link=repo.repo_id
-        )
+        repo = RepoModel.objects.filter(repo_id=repo_id).first()
+        if not repo:
+            return render(request, self.template_name, {"error": "Repositório não encontrado"})
+
+        repo_object = RepoObjectModel.objects.filter(repo_link=repo.repo_id).first()
+        issues = RepoIssueModel.objects.filter(repo_link=repo.repo_id)
+
         context = {
             "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
             "repo": repo,
@@ -114,30 +146,30 @@ class RepoPageView(View):
             "issues": issues,
             "issues_count": issues.count()
         }
-        if repo_object:
-            archive_path = os.path.join(
-                settings.BASE_DIR, 
-                'test_repos', 
+
+        if repo_object and repo_object.upload_hash:
+            try:
+                # Busca o arquivo ZIP do servidor remoto
+                zip_buffer = self.get_remote_zip(repo_object.upload_hash)
                 
-                f'{repo_object.upload}'
-            )
-            with tarfile.open(archive_path, 'r:gz') as tar:
-                members = [m for m in tar.getmembers() if m.isreg()]
-                files = []
-                for m in members:
-                    files.append({
-                        'name': m.name,
-                        'size': m.size,
-                        'modified': datetime.fromtimestamp(m.mtime).strftime('%Y-%m-%d %H:%M:%S')
-                    })
-            context = {
-                "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
-                "repo": repo,
-                "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
-                "files": files,
-                "issues": issues,
-                "issues_count": issues.count()
-            }
+                if zip_buffer:
+                    # Lê o arquivo ZIP diretamente da memória
+                    with zipfile.ZipFile(zip_buffer, 'r') as zipf:
+                        files = []
+                        for file_info in zipf.infolist():
+                            if not file_info.is_dir():
+                                files.append({
+                                    'name': file_info.filename,
+                                    'size': file_info.file_size,
+                                    'modified': datetime(*file_info.date_time).strftime('%Y-%m-%d %H:%M:%S')
+                                })
+                                
+                    context["files"] = files
+
+            except Exception as e:
+                print(f"Erro ao processar arquivo: {e}")
+                context["error"] = "Erro ao carregar arquivos do repositório"
+
         return render(request, self.template_name, context)
     
     def post(self, request, repo_id, *args, **kwargs):
@@ -189,42 +221,85 @@ class RepoPageView(View):
 class FileDetailView(View):
     template_name = 'file_detail.html'
 
+    def get_remote_zip(self, hash_name):
+        """Busca o arquivo ZIP no servidor remoto via SFTP"""
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(
+                hostname='192.168.3.59',
+                username='servidor',
+                password='0110'
+            )
+            sftp = ssh.open_sftp()
+            remote_path = f'/home/servidor/repos/{hash_name}.zip'
+            zip_buffer = io.BytesIO()
+            sftp.getfo(remote_path, zip_buffer)
+            zip_buffer.seek(0)
+            return zip_buffer
+        except Exception as e:
+            print(f"Erro SFTP: {e}")
+            return None
+        finally:
+            sftp.close() if 'sftp' in locals() else None
+            ssh.close() if 'ssh' in locals() else None
+
     def get(self, request, repo_id, *args, **kwargs):
         repo_obj = RepoObjectModel.objects.filter(
             repo_link=repo_id
         ).first()
+        print(repo_obj)
+        if not repo_obj or not repo_obj.upload_hash:
+            return render(request, self.template_name, {'error': 'Repositório não encontrado'})
 
         file_path = request.GET.get('path')
         if not file_path:
-            return render(request, self.template_name, {'error': 'Caminho do arquivo não informado.'})
-
-        archive_path = os.path.join(settings.BASE_DIR, 'test_repos', f'{repo_obj.upload}')
-        with tarfile.open(archive_path, 'r:gz') as tar:
-            try:
-                member = tar.getmember(file_path)
-            except KeyError:
-                return render(request, self.template_name, {'error': 'Arquivo não encontrado no repositório.'})
-            f = tar.extractfile(member)  # :contentReference[oaicite:10]{index=10}
-            raw = f.read().decode('utf-8', errors='replace')
-            f.close()
+            return render(request, self.template_name, {'error': 'Caminho do arquivo não informado'})
 
         try:
-            lexer = get_lexer_for_filename(file_path, stripall=True)
-        except Exception:
-            lexer = guess_lexer(raw)
-        formatter = HtmlFormatter(linenos=True, cssclass="highlight")
-        highlighted = highlight(raw, lexer, formatter)
-        css_style = formatter.get_style_defs('.highlight')
+            # Buscar ZIP do servidor remoto
+            zip_buffer = self.get_remote_zip(repo_obj.upload_hash)
+            if not zip_buffer:
+                return render(request, self.template_name, {'error': 'Arquivo do repositório não encontrado'})
 
-        context = {
-            'repo_owner': repo_obj.repo_link.repo_owner,
-            'repo_id': repo_obj.repo_link.repo_id,
-            'repo_name': repo_obj.repo_link.repo_name,
-            'file_name': file_path,
-            'highlighted_code': mark_safe(highlighted),
-            'css_style': css_style,
-        }
-        return render(request, self.template_name, context)
+            # Ler arquivo do ZIP em memória
+            with zipfile.ZipFile(zip_buffer, 'r') as zipf:
+                try:
+                    file_info = zipf.getinfo(file_path)
+                    if file_info.is_dir():
+                        raise KeyError  # Ignorar diretórios
+                    raw = zipf.read(file_path).decode('utf-8', errors='replace')
+                except KeyError:
+                    return render(request, self.template_name, {'error': 'Arquivo não encontrado no repositório'})
+
+            # Realçar sintaxe
+            try:
+                lexer = get_lexer_for_filename(file_path, stripall=True)
+            except Exception:
+                lexer = guess_lexer(raw)
+                
+            formatter = HtmlFormatter(linenos=True, cssclass="highlight")
+            highlighted = highlight(raw, lexer, formatter)
+            css_style = formatter.get_style_defs('.highlight')
+
+            repo_data = RepoModel.objects.filter(
+                repo_id=repo_obj.repo_link
+            ).first()
+            print(repo_data)
+
+            context = {
+                'repo_owner': repo_data.repo_owner,
+                'repo_id': repo_data.repo_id,
+                'repo_name': repo_data.repo_name,
+                'file_name': file_path,
+                'highlighted_code': mark_safe(highlighted),
+                'css_style': css_style,
+            }
+            return render(request, self.template_name, context)
+
+        except Exception as e:
+            print(f"Erro geral: {e}")
+            return render(request, self.template_name, {'error': 'Erro ao processar arquivo'})
 
 
 class ProfileView(View):

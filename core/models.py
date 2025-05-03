@@ -105,12 +105,13 @@ class RepoObjectModel(models.Model):
         default=uuid.uuid4,
         editable=False
     )
-    upload = models.FileField(
-        upload_to=user_directory_path
+    upload_hash = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True
     )
-    repo_link = models.ForeignKey(
-        RepoModel,
-        on_delete=models.PROTECT,
+    repo_link = models.CharField(
+        max_length=250,
         null=True,
         blank=True
     )

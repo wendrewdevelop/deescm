@@ -85,8 +85,12 @@ WSGI_APPLICATION = 'deescm.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'server',  # Nome do seu banco de dados
+        'USER': 'postgres',  # Substitua pelo seu nome de usuário do PostgreSQL
+        'PASSWORD': 'postgres',  # Substitua pela sua senha do PostgreSQL
+        'HOST': '192.168.3.59',  # IP do seu servidor PostgreSQL
+        'PORT': '5432',  # Porta padrão do PostgreSQL
     }
 }
 
