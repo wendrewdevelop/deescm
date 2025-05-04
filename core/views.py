@@ -145,17 +145,39 @@ class RepoPageView(View):
             "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
             "issues": issues,
             "issues_count": issues.count(),
-            "repo_obj": repo_object
+            "repo_obj": repo_object,
+            "readme_content": None  # Valor padrão
         }
 
         if repo_object and repo_object.upload_hash:
             try:
-                # Busca o arquivo ZIP do servidor remoto
                 zip_buffer = self.get_remote_zip(repo_object.upload_hash)
                 
                 if zip_buffer:
-                    # Lê o arquivo ZIP diretamente da memória
                     with zipfile.ZipFile(zip_buffer, 'r') as zipf:
+                        # Busca por qualquer variação do nome README
+                        readme_info = None
+                        for file_info in zipf.infolist():
+                            if file_info.filename.lower() == 'readme.md':
+                                readme_info = file_info
+                                break
+
+                        # Se encontrou o README
+                        if readme_info and not readme_info.is_dir():
+                            raw_readme = zipf.read(readme_info).decode('utf-8', errors='replace')
+                            
+                            # Realçar sintaxe do Markdown
+                            try:
+                                lexer = get_lexer_for_filename('README.md')
+                            except Exception:
+                                lexer = get_lexer_by_name('markdown')
+                                
+                            formatter = HtmlFormatter(style="friendly", linenos=False)
+                            highlighted_readme = highlight(raw_readme, lexer, formatter)
+                            
+                            context["readme_content"] = mark_safe(highlighted_readme)
+                            
+                        # Listagem de arquivos mantida
                         files = []
                         for file_info in zipf.infolist():
                             if not file_info.is_dir():
@@ -164,8 +186,8 @@ class RepoPageView(View):
                                     'size': file_info.file_size,
                                     'modified': datetime(*file_info.date_time).strftime('%Y-%m-%d %H:%M:%S')
                                 })
-                                
-                    context["files"] = files
+                        
+                        context["files"] = files
 
             except Exception as e:
                 print(f"Erro ao processar arquivo: {e}")
@@ -246,10 +268,7 @@ class FileDetailView(View):
             ssh.close() if 'ssh' in locals() else None
 
     def get(self, request, repo_id, *args, **kwargs):
-        repo_obj = RepoObjectModel.objects.filter(
-            repo_link=repo_id
-        ).first()
-        print(repo_obj)
+        repo_obj = RepoObjectModel.objects.filter(repo_link=repo_id).first()
         if not repo_obj or not repo_obj.upload_hash:
             return render(request, self.template_name, {'error': 'Repositório não encontrado'})
 
@@ -258,38 +277,33 @@ class FileDetailView(View):
             return render(request, self.template_name, {'error': 'Caminho do arquivo não informado'})
 
         try:
-            # Buscar ZIP do servidor remoto
             zip_buffer = self.get_remote_zip(repo_obj.upload_hash)
             if not zip_buffer:
                 return render(request, self.template_name, {'error': 'Arquivo do repositório não encontrado'})
 
-            # Ler arquivo do ZIP em memória
             with zipfile.ZipFile(zip_buffer, 'r') as zipf:
                 try:
                     file_info = zipf.getinfo(file_path)
                     if file_info.is_dir():
-                        raise KeyError  # Ignorar diretórios
+                        raise KeyError
                     raw = zipf.read(file_path).decode('utf-8', errors='replace')
                 except KeyError:
                     return render(request, self.template_name, {'error': 'Arquivo não encontrado no repositório'})
 
-            # Realçar sintaxe
             try:
                 lexer = get_lexer_for_filename(file_path, stripall=True)
             except Exception:
                 lexer = guess_lexer(raw)
                 
-            formatter = HtmlFormatter(linenos=True, cssclass="highlight")
+            formatter = HtmlFormatter(linenos=False, cssclass="highlight", style="friendly")
             highlighted = highlight(raw, lexer, formatter)
             css_style = formatter.get_style_defs('.highlight')
 
-            repo_data = RepoModel.objects.filter(
-                repo_id=repo_obj.repo_link
-            ).first()
-            print(repo_data)
+            # Correção aplicada aqui ↓
+            repo_data = repo_obj.repo_link  # Acesso direto ao objeto relacionado
 
             context = {
-                'repo_owner': repo_data.repo_owner,
+                'repo_owner': repo_data.repo_owner,  # Agora funciona corretamente
                 'repo_id': repo_data.repo_id,
                 'repo_name': repo_data.repo_name,
                 'file_name': file_path,

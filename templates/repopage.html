@@ -78,14 +78,13 @@
           <!-- Overview -->
           <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
             <h5>README.md</h5>
-            <pre class="bg-light p-3" style="white-space: pre-wrap;"># Projeto Exemplo
-Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
-
-## Funcionalidades
-- Exibição de README
-- Navegação por abas
-- Estatísticas e detalhes na sidebar
-            </pre>
+            {% if readme_content %}
+              {{ readme_content|safe }}
+            {% else %}
+              <div class="alert alert-info">
+                  Nenhum arquivo README.md encontrado neste repositório
+              </div>
+            {% endif %}
           </div>
           <!-- Code -->
           <div class="tab-pane fade" id="code" role="tabpanel" aria-labelledby="code-tab">
