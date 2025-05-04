@@ -52,6 +52,7 @@
 
   <!-- Conteúdo Principal -->
   <div class="container flex-grow-1 mb-5">
+    {% if repo_obj %}
     <div class="row">
       <!-- Seção Principal -->
       <div class="col-lg-8">
@@ -265,6 +266,63 @@ Este projeto demonstra um layout de página de repositório com Bootstrap 5.3.
         </div>
       </aside>
     </div>
+    {% else %}
+    <div class="row">
+      <!-- Seção Principal -->
+      <div class="col-lg-8">
+        <h2>{{repo.repo_name}}</h2>
+        <p class="text-muted">
+          {{repo.repo_description}}
+        </p>
+        <ul class="nav nav-tabs" id="repoTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Visão Geral</button>
+          </li>
+        </ul>
+        <div class="tab-content border p-3" id="repoTabContent">
+          <!-- Overview -->
+          <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+            <h5>README.md</h5>
+            <pre class="bg-light p-3" style="white-space: pre-wrap;"># Siga os passos abaixo para realizar seu primeiro commit: <br>
+1. dee init .
+2. dee add .
+3. dee commit "message..."
+4. dee push {{repo.repo_id}} -- Somente no primeiro push
+            </pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="col-lg-4">
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Estatísticas</h5>
+            <p><i class="bi bi-star"></i> 0 Stars</p>
+            <p><i class="bi bi-git"></i> 0 Forks</p>
+            <p><i class="bi bi-exclamation-circle"></i> {{issues_count}} Issues</p>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Linguagens</h5>
+            <span class="badge bg-primary">HTML</span>
+            <span class="badge bg-success">CSS</span>
+            <span class="badge bg-warning text-dark">JavaScript</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Clonar</h5>
+            <div class="input-group">
+              <input type="text" class="form-control" value="dee clone http://127.0.0.1:8000/repo/edafc182-efad-4dc5-9363-890be3cea63c/" readonly>
+              <button class="btn btn-outline-secondary" type="button">Copiar</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Footer -->

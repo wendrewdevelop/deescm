@@ -144,7 +144,8 @@ class RepoPageView(View):
             "repo": repo,
             "user_name": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name}',
             "issues": issues,
-            "issues_count": issues.count()
+            "issues_count": issues.count(),
+            "repo_obj": repo_object
         }
 
         if repo_object and repo_object.upload_hash:

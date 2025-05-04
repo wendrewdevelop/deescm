@@ -110,8 +110,10 @@ class RepoObjectModel(models.Model):
         null=True,
         blank=True
     )
-    repo_link = models.CharField(
-        max_length=250,
+    repo_link = models.ForeignKey( 
+        RepoModel,
+        on_delete=models.CASCADE,
+        related_name='repo_objects',
         null=True,
         blank=True
     )
