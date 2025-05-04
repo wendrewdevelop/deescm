@@ -25,6 +25,73 @@ from .models import (
     RepoForksModel
 )
 
+LANGUAGES = {
+    '.py': 'Python',
+    '.js': 'JavaScript',
+    '.jsx': 'React',
+    '.ts': 'TypeScript',
+    '.java': 'Java',
+    '.kt': 'Kotlin',
+    '.cpp': 'C++',
+    '.h': 'C/C++',
+    '.c': 'C',
+    '.cs': 'C#',
+    '.php': 'PHP',
+    '.rb': 'Ruby',
+    '.go': 'Go',
+    '.rs': 'Rust',
+    '.swift': 'Swift',
+    '.m': 'Objective-C',
+    '.html': 'HTML',
+    '.css': 'CSS',
+    '.scss': 'Sass',
+    '.sass': 'Sass',
+    '.less': 'Less',
+    '.md': 'Markdown',
+    '.json': 'JSON',
+    '.yml': 'YAML',
+    '.yaml': 'YAML',
+    '.xml': 'XML',
+    '.sql': 'SQL',
+    '.sh': 'Shell',
+    '.bat': 'Batch',
+    '.ps1': 'PowerShell',
+    '.lua': 'Lua',
+    '.pl': 'Perl',
+    '.r': 'R',
+    '.dart': 'Dart',
+    '.hs': 'Haskell',
+    '.exs': 'Elixir',
+    '.vue': 'Vue',
+    '.svelte': 'Svelte',
+    '.tf': 'Terraform',
+    '.dockerfile': 'Docker',
+    '.dockerignore': 'Docker',
+    '.gitignore': 'Git'
+}
+LANGUAGE_CSS_CLASSES = {
+    'Python': 'python',
+    'JavaScript': 'javascript',
+    'TypeScript': 'typescript',
+    'Java': 'java',
+    'C++': 'cpp',
+    'C#': 'csharp',
+    'PHP': 'php',
+    'Ruby': 'ruby',
+    'Go': 'go',
+    'Rust': 'rust',
+    'HTML': 'html',
+    'CSS': 'css',
+    'Shell': 'shell',
+    'Swift': 'swift',
+    'Dart': 'dart',
+    'Kotlin': 'kotlin',
+    'Sass': 'sass',
+    'Less': 'less',
+    'Vue': 'vue',
+    'React': 'react'
+}
+
 
 class IndexView(View):
     template_name = 'index.html'
@@ -146,7 +213,8 @@ class RepoPageView(View):
             "issues": issues,
             "issues_count": issues.count(),
             "repo_obj": repo_object,
-            "readme_content": None  # Valor padrão
+            "readme_content": None,
+            "languages": set() 
         }
 
         if repo_object and repo_object.upload_hash:
@@ -155,12 +223,31 @@ class RepoPageView(View):
                 
                 if zip_buffer:
                     with zipfile.ZipFile(zip_buffer, 'r') as zipf:
+                        languages = set()
                         # Busca por qualquer variação do nome README
                         readme_info = None
                         for file_info in zipf.infolist():
                             if file_info.filename.lower() == 'readme.md':
                                 readme_info = file_info
                                 break
+                            if not file_info.is_dir():
+                                filename = file_info.filename
+                                _, ext = os.path.splitext(filename)
+                                ext = ext.lower()
+
+                                language = LANGUAGES.get(ext)
+                                if language:
+                                    languages.add(language)
+                        
+                        languages_with_classes = []
+                        for lang in sorted(languages):
+                            css_class = LANGUAGE_CSS_CLASSES.get(lang, 'default')
+                            languages_with_classes.append({
+                                'name': lang,
+                                'css_class': css_class.lower()  # Usar lowercase para compatibilidade com CSS
+                            })
+                            
+                        context["languages"] = languages_with_classes 
 
                         # Se encontrou o README
                         if readme_info and not readme_info.is_dir():
