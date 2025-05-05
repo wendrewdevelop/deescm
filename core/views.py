@@ -227,9 +227,9 @@ class RepoPageView(View):
                         # Busca por qualquer variação do nome README
                         readme_info = None
                         for file_info in zipf.infolist():
+                            print(file_info.is_dir())
                             if file_info.filename.lower() == 'readme.md':
                                 readme_info = file_info
-                                break
                             if not file_info.is_dir():
                                 filename = file_info.filename
                                 _, ext = os.path.splitext(filename)
