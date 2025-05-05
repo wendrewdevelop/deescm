@@ -355,7 +355,9 @@ class FileDetailView(View):
             ssh.close() if 'ssh' in locals() else None
 
     def get(self, request, repo_id, *args, **kwargs):
+        # repo_obj = RepoObjectModel.objects.filter(repo_link=repo_id).first()
         repo_obj = RepoObjectModel.objects.filter(repo_link=repo_id).first()
+        print(f'REPO OBJ::: {repo_obj.upload_hash}')
         if not repo_obj or not repo_obj.upload_hash:
             return render(request, self.template_name, {'error': 'Repositório não encontrado'})
 
