@@ -418,8 +418,35 @@ class ProfileView(View):
         context["first_name"] = user_data.first_name
         context["last_name"] = user_data.last_name
         context["email"] = user_data.email
+        context["user_id"] = user_id
         context["user_name"] = f'{user_data.first_name} {user_data.last_name}'
         return render(request, self.template_name, context)
+    
+    def post(self, request, user_id, *args, **kwargs):
+        if request.method == "POST":
+            first_name = request.POST.get('first_name')
+            print(first_name)
+            last_name = request.POST.get('last_name')
+            print(last_name)
+            email = request.POST.get('email')
+            print(email)
+            try:
+                user_instance = AccountModel.objects.get(
+                    id=user_id
+                )
+                user_instance.first_name = first_name
+                user_instance.last_name = last_name
+                user_instance.email = email
+                user_instance.save()
+                print(user_instance)
+                return redirect('profile', user_id=user_id)
+            except Exception as error:
+                messages.error(
+                    request, 
+                    'Erro ao atualizar os dados, tente novamente ou contate o suporte!', 
+                    extra_tags='error'
+                )
+                return redirect('profile', user_id=user_id)
     
 
 class LoginView(View):

@@ -81,20 +81,25 @@
           <!-- Dados Básicos -->
           <div class="tab-pane fade show active" id="basic-info" role="tabpanel" aria-labelledby="basic-info-tab">
             <h2>Dados Básicos</h2>
-            <form>
+            <form action="{% url 'profile' user_id=user_id %}" method="post">
+              {% csrf_token %}
               <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="userName" value="{{first_name}} {{last_name}}" disabled>
-                <label for="userName">Nome Completo</label>
+                <input type="text" class="form-control" id="first_name" value="{{first_name}}" name="first_name">
+                <label for="first_name">Primeiro nome</label>
               </div>
               <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="userEmail" value="{{email}}" disabled>
+                <input type="text" class="form-control" id="last_name" value="{{last_name}}" name="last_name">
+                <label for="last_name">Último nome</label>
+              </div>
+              <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="userEmail" value="{{email}}" name="email">
                 <label for="userEmail">E-mail</label>
               </div>
               <!-- <div class="mb-3">
                 <label for="userAvatar" class="form-label">Avatar</label>
                 <input class="form-control" type="file" id="userAvatar">
-              </div>
-              <button type="submit" class="btn btn-primary">Salvar Alterações</button> -->
+              </div>-->
+              <button type="submit" class="btn btn-primary float-end">Salvar Alterações</button> 
             </form>
           </div>
           <!-- Segurança -->

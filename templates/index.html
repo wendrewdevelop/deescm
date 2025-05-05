@@ -22,7 +22,11 @@
           <li class="nav-item"><a class="nav-link active" href="#">Início</a></li>
           <li class="nav-item"><a class="nav-link" href="#features">Recursos</a></li>
           <li class="nav-item"><a class="nav-link" href="#trending">Em Destaque</a></li>
+          {% if user.is_authenticated %}
+          <li class="nav-item"><a class="btn btn-primary" href="{% url 'profile' user_id=user.pk %}">Perfil</a></li>
+          {% else %}
           <li class="nav-item"><a class="btn btn-primary" href="{% url 'login' %}">Entrar/Registrar</a></li>
+          {% endif %}
         </ul>
       </div>
     </div>
