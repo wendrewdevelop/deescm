@@ -400,8 +400,8 @@
           <div class="card-body">
             <h5 class="card-title">Clonar</h5>
             <div class="input-group">
-              <input type="text" class="form-control" value="dee clone http://127.0.0.1:8000/repo/edafc182-efad-4dc5-9363-890be3cea63c/" readonly>
-              <button class="btn btn-outline-secondary" type="button">Copiar</button>
+              <input id="clone-input" type="text" class="form-control" value="dee clone {{repo_obj.upload_hash}}" readonly>
+              <button id="copy-btn" class="btn btn-outline-secondary" type="button">Copiar</button>
             </div>
           </div>
         </div>
@@ -497,6 +497,22 @@
           ['clean'],                                        
           ['link', 'image', 'video']                        
         ]
+      }
+    });
+    document.getElementById('copy-btn').addEventListener('click', function() {
+      const input = document.getElementById('clone-input');
+      input.select();
+      input.setSelectionRange(0, 99999); // Para dispositivos móveis
+
+      try {
+        document.execCommand('copy');
+        // Feedback opcional: muda o texto do botão temporariamente
+        const btn = this;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copiado!';
+        setTimeout(() => btn.textContent = originalText, 2000);
+      } catch (err) {
+        console.error('Falha ao copiar', err);
       }
     });
   </script>
