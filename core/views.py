@@ -203,8 +203,32 @@ class RepoPageView(View):
         if not repo:
             return render(request, self.template_name, {"error": "Repositório não encontrado"})
 
-        repo_object = RepoObjectModel.objects.filter(repo_link=repo.repo_id).first()
+        # repo_object = RepoObjectModel.objects.filter(repo_link=repo.repo_id).first()
         issues = RepoIssueModel.objects.filter(repo_link=repo.repo_id)
+
+        branches = (
+            RepoObjectModel.objects
+            .filter(repo_link=repo.repo_id)
+            .values_list('branch', flat=True)
+            .distinct()
+        )
+        print(f'BRANCHS::: {branches}')
+        selected_branch = request.GET.get('branch', 'main')
+        print(f'SELECTED BRANCH::: {selected_branch}')
+        if selected_branch not in branches:
+            selected_branch = branches.first() or 'main'
+
+        try:
+            repo_object = (
+                RepoObjectModel.objects
+                .filter(
+                    repo_link=repo.repo_id, 
+                    branch=selected_branch
+                ).first()
+            )
+        except Exception as error:
+            print(f'Erro ao mudar de banch: {error}.')
+            repo_object = None
 
         context = {
             "title": f'{repo.repo_owner.first_name} {repo.repo_owner.last_name} – {repo.repo_name}',
@@ -213,6 +237,8 @@ class RepoPageView(View):
             "issues": issues,
             "issues_count": issues.count(),
             "repo_obj": repo_object,
+            'selected_branch': selected_branch,
+            'branches': branches,
             "readme_content": None,
             "languages": set() 
         }

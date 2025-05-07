@@ -110,6 +110,10 @@ class RepoObjectModel(models.Model):
         null=True,
         blank=True
     )
+    branch = models.CharField(
+        max_length=100, 
+        default="main"
+    )
     repo_link = models.ForeignKey( 
         RepoModel,
         on_delete=models.CASCADE,
