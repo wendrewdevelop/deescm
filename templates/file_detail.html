@@ -77,6 +77,29 @@
       <aside class="col-lg-4">
         <div class="card mb-4">
           <div class="card-body">
+            <h5 class="card-title">Branch</h5>
+            <form method="get" class="mb-3">
+              <label for="branch-select" class="form-label">Branch:</label>
+              <select 
+                name="branch" 
+                id="branch-select" 
+                class="form-select" 
+                onchange="this.form.submit()"
+              >
+                {% for br in branches %}
+                  <option 
+                    value="{{ br }}" 
+                    {% if br == selected_branch %}selected{% endif %}
+                  >
+                    {{ br }}
+                  </option>
+                {% endfor %}
+              </select>
+            </form>            
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="card-body">
             <h5 class="card-title">Estatísticas</h5>
             <p><i class="bi bi-star"></i> 256 Stars</p>
             <p><i class="bi bi-git"></i> 42 Forks</p>
