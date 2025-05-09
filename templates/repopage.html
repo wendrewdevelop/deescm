@@ -254,9 +254,9 @@
                         {% for file in files %}
                         <tr>
                             <td>
-                                <a href="{% url 'repo_file_detail' repo.repo_id %}?path={{ file.name|urlencode }}">
-                                    {{ file.name }}
-                                </a>
+                              <a href="{% url 'repo_file_detail' repo.repo_id %}?branch={{ selected_branch }}&path={{ file.name|urlencode }}">
+                                  {{ file.name }}
+                              </a>
                             </td>
                             <td>{{ file.size }}</td>
                             <td>{{ file.modified }}</td>

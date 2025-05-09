@@ -80,22 +80,15 @@
             <h5 class="card-title">Branch</h5>
             <form method="get" class="mb-3">
               <label for="branch-select" class="form-label">Branch:</label>
-              <select 
-                name="branch" 
-                id="branch-select" 
-                class="form-select" 
-                onchange="this.form.submit()"
-              >
+              <input type="hidden" name="path" value="{{ request.GET.path|default_if_none:'' }}">
+              <select name="branch" id="branch-select" class="form-select" onchange="this.form.submit()">
                 {% for br in branches %}
-                  <option 
-                    value="{{ br }}" 
-                    {% if br == selected_branch %}selected{% endif %}
-                  >
+                  <option value="{{ br }}" {% if br == selected_branch %}selected{% endif %}>
                     {{ br }}
                   </option>
                 {% endfor %}
               </select>
-            </form>            
+            </form>                      
           </div>
         </div>
         <div class="card mb-4">

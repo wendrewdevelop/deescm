@@ -166,36 +166,26 @@ class RepoPageView(View):
     template_name = 'repopage.html'
 
     def get_remote_zip(self, repo_id, branch, upload_hash):
-        """Busca o arquivo ZIP no servidor remoto via SFTP, no caminho /repos/<repo_id>/<branch>/<branch>-<hash>.zip"""
-        try:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(
-                hostname='192.168.3.59',
-                username='servidor',
-                password='0110'
-            )
-            sftp = ssh.open_sftp()
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(
+            hostname='192.168.3.59',
+            username='servidor',
+            password='0110'
+        )
+        sftp = ssh.open_sftp()
 
-            # Monta nome do arquivo e caminho
-            zip_filename = f"{branch}-{upload_hash}.zip"
-            remote_dir   = f"/home/servidor/repos/{repo_id}/{branch}"
-            remote_path  = f"{remote_dir}/{zip_filename}"
+        zip_filename = f"{branch}-{upload_hash}.zip"
+        remote_dir   = f"/home/servidor/repos/{repo_id}/{branch}"
+        remote_path  = f"{remote_dir}/{zip_filename}"
 
-            # Baixa para memória
-            buf = io.BytesIO()
-            sftp.getfo(remote_path, buf)
-            buf.seek(0)
-            return buf
+        buf = io.BytesIO()
+        sftp.getfo(remote_path, buf)
+        buf.seek(0)
 
-        except Exception as e:
-            print(f"Erro ao buscar arquivo remoto: {e}")
-            return None
-        finally:
-            if 'sftp' in locals():
-                sftp.close()
-            if 'ssh' in locals():
-                ssh.close()
+        sftp.close()
+        ssh.close()
+        return buf
 
     def get(self, request, repo_id, *args, **kwargs):
         repo = RepoModel.objects.filter(repo_id=repo_id).first()
@@ -214,6 +204,8 @@ class RepoPageView(View):
         print(f'BRANCHS::: {branches}')
         selected_branch = request.GET.get('branch', 'main')
         print(f'SELECTED BRANCH::: {selected_branch}')
+        # /home/servidor/repos/00ad54c4-c043-4aeb-9631-2da242722d0a/main
+        print(f'/home/servidor/repos/{repo_id}/{selected_branch}')
         if selected_branch not in branches:
             selected_branch = branches.first() or 'main'
 
@@ -223,10 +215,11 @@ class RepoPageView(View):
                 .filter(
                     repo_link=repo.repo_id, 
                     branch=selected_branch
-                ).first()
+                ).order_by('-created_at').first()
             )
+            print(f"{selected_branch}-{repo_object.upload_hash}.zip")
         except Exception as error:
-            print(f'Erro ao mudar de banch: {error}.')
+            print(f'Erro ao mudar de branch: {error}.')
             repo_object = None
 
         context = {
@@ -243,12 +236,17 @@ class RepoPageView(View):
         }
 
         if repo_object and repo_object.upload_hash:
+            print(repo_object.upload_hash)
             try:
+                print(f'REPO ID::: {repo_id}')
+                print(f'SELECTED BRANCH::: {selected_branch}')
+                print(f'UPLOAD HASH::: {repo_object.upload_hash}')
                 zip_buffer = self.get_remote_zip(
                     repo_id, 
                     selected_branch, 
                     repo_object.upload_hash
                 )
+                print(f'ZIP BUFFER::: {zip_buffer}')
                 
                 if zip_buffer:
                     with zipfile.ZipFile(zip_buffer, 'r') as zipf:
@@ -360,69 +358,56 @@ class RepoPageView(View):
 class FileDetailView(View):
     template_name = 'file_detail.html'
 
-    def get_remote_zip(self, hash_name):
-        """Busca o arquivo ZIP no servidor remoto via SFTP"""
-        try:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(
-                hostname='192.168.3.59',
-                username='servidor',
-                password='0110'
-            )
-            sftp = ssh.open_sftp()
-            zip_filename = f"{branch}-{upload_hash}.zip"
-            remote_dir   = f"/home/servidor/repos/{repo_id}/{branch}"
-            remote_path  = f"{remote_dir}/{zip_filename}"
-            zip_buffer = io.BytesIO()
-            sftp.getfo(remote_path, zip_buffer)
-            zip_buffer.seek(0)
-            return zip_buffer
-        except Exception as e:
-            print(f"Erro SFTP: {e}")
-            return None
-        finally:
-            sftp.close() if 'sftp' in locals() else None
-            ssh.close() if 'ssh' in locals() else None
+    def get_remote_zip(self, repo_id, branch, upload_hash):
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname='192.168.3.59', username='servidor', password='0110')
+        sftp = ssh.open_sftp()
+
+        zip_filename = f"{branch}-{upload_hash}.zip"
+        remote_dir   = f"/home/servidor/repos/{repo_id}/{branch}"
+        remote_path  = f"{remote_dir}/{zip_filename}"
+        print(f"full remote path::: {remote_path}")
+
+        buf = io.BytesIO()
+        sftp.getfo(remote_path, buf)
+        buf.seek(0)
+
+        sftp.close()
+        ssh.close()
+        return buf
 
     def get(self, request, repo_id, *args, **kwargs):
-        # Busca o repositório ou 404
-        repo = RepoModel.objects.filter(
-            repo_id=repo_id
-        ).first()
+        repo = RepoModel.objects.filter(repo_id=repo_id).first()
+        if not repo:
+            return render(request, self.template_name, {'error': 'Repositório não encontrado'})
 
-        # Lista todas as branches existentes
-        branches = (
-            RepoObjectModel.objects
-            .filter(repo_link=repo.repo_id)
-            .values_list('branch', flat=True)
-            .distinct()
-        )
-
-        # Branch selecionada via querystring, default main
+        branches = RepoObjectModel.objects.filter(repo_link=repo.repo_id) \
+                                          .values_list('branch', flat=True) \
+                                          .distinct()
         selected_branch = request.GET.get('branch', 'main')
         if selected_branch not in branches:
             selected_branch = branches.first() or 'main'
 
-        # Busca o último objeto (ZIP) daquela branch
-        repo_obj = (
-            RepoObjectModel.objects
-            .filter(
-                repo_link=repo, 
-                branch=selected_branch
-            ).first()
-        )
+        repo_obj = RepoObjectModel.objects.filter(
+            repo_link=repo,
+            branch=selected_branch
+        ).order_by('-created_at').first()
+        print(repo_id, 
+                selected_branch, 
+                repo_obj.upload_hash)
         if not repo_obj or not repo_obj.upload_hash:
+            print("cai no not repo_obj or not repo_obj.upload_hash")
             return render(request, self.template_name, {
-                'error': 'Repositório ou branch não encontrado',
+                'error': 'Nenhum upload para essa branch',
                 'branches': branches,
                 'selected_branch': selected_branch,
                 'repo': repo,
             })
 
-        # Necessitamos do caminho do arquivo
         file_path = request.GET.get('path')
         if not file_path:
+            print("cai no not file_path")
             return render(request, self.template_name, {
                 'error': 'Caminho do arquivo não informado',
                 'branches': branches,
@@ -437,46 +422,40 @@ class FileDetailView(View):
                 'user_name': f"{repo.repo_owner.first_name} {repo.repo_owner.last_name}",
             })
 
-        # Busca o ZIP remoto
-        zip_buffer = self.get_remote_zip(
-            repo_id,
-            selected_branch,
-            repo_obj.upload_hash
-        )
-        if not zip_buffer:
-            return render(request, self.template_name, {
-                'error': 'Arquivo do repositório não encontrado',
-                'branches': branches,
-                'selected_branch': selected_branch,
-                'repo': repo,
-            })
-
-        # Extrai e destaca o código
         try:
-            with zipfile.ZipFile(zip_buffer, 'r') as zipf:
+            zip_buf = self.get_remote_zip(
+                repo_id, 
+                selected_branch, 
+                repo_obj.upload_hash
+            )
+            with zipfile.ZipFile(zip_buf, 'r') as zipf:
                 info = zipf.getinfo(file_path)
                 if info.is_dir():
-                    raise KeyError
+                    raise KeyError(f"{file_path} é um diretório")
                 raw = zipf.read(file_path).decode('utf-8', errors='replace')
         except KeyError:
             return render(request, self.template_name, {
-                'error': 'Arquivo não encontrado no repositório',
+                'error': 'Arquivo não encontrado',
+                'branches': branches,
+                'selected_branch': selected_branch,
+                'repo': repo,
+            })
+        except Exception as e:
+            return render(request, self.template_name, {
+                'error': f"Falha ao carregar arquivo: {e}",
                 'branches': branches,
                 'selected_branch': selected_branch,
                 'repo': repo,
             })
 
-        # Detecta lexer
         try:
-            lexer = get_lexer_for_filename(file_path, stripall=True)
+            lexer = get_lexer_for_filename(file_path)
         except Exception:
             lexer = guess_lexer(raw)
-
         formatter = HtmlFormatter(linenos=False, cssclass="highlight", style="friendly")
         highlighted = highlight(raw, lexer, formatter)
         css_style = formatter.get_style_defs('.highlight')
 
-        # Monta contexto
         context = {
             'repo_owner': repo.repo_owner,
             'repo_id': repo.repo_id,

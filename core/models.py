@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from django.utils.timezone import now, timedelta
 from django.db import models
 from django.db.models.signals import post_save
@@ -121,6 +122,8 @@ class RepoObjectModel(models.Model):
         null=True,
         blank=True
     )
+    created_at = models.DateTimeField(default=datetime.now, blank=True)
+
     
     class Meta:
         verbose_name = 'repo_object'

@@ -21,7 +21,7 @@ urlpatterns = [
     path('repo/<str:repo_id>/', RepoPageView.as_view(), name='repo'),
     path('profile/<str:user_id>/', ProfileView.as_view(), name='profile'),
     path(
-        'repo/<str:repo_id>/file/',
+        'repo/<uuid:repo_id>/file/',
         FileDetailView.as_view(),
         name='repo_file_detail'
     ),
