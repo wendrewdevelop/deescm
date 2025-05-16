@@ -169,7 +169,7 @@ class RepoPageView(View):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
-            hostname='192.168.3.59',
+            hostname='192.168.3.60',
             username='servidor',
             password='0110'
         )
@@ -361,7 +361,7 @@ class FileDetailView(View):
     def get_remote_zip(self, repo_id, branch, upload_hash):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname='192.168.3.59', username='servidor', password='0110')
+        ssh.connect(hostname='192.168.3.60', username='servidor', password='0110')
         sftp = ssh.open_sftp()
 
         zip_filename = f"{branch}-{upload_hash}.zip"
